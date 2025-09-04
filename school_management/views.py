@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.db.models import Q, Sum, Count
 from django.core.paginator import Paginator
 from django.utils import timezone
+import jdatetime
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -15,8 +16,10 @@ from .forms import StudentForm, FeePaymentForm, ReportFilterForm, StudentSearchF
 
 def dashboard(request):
     """Main dashboard view with summary statistics"""
-    current_year = timezone.now().year
-    current_month = timezone.now().month
+    # Use Jalali (Afghan) calendar for dashboard context
+    j_now = jdatetime.date.today()
+    current_year = j_now.year
+    current_month = j_now.month
     
     # Get monthly summary
     monthly_summary = FeePayment.get_monthly_summary(current_year, current_month)
@@ -197,7 +200,14 @@ def payment_list(request):
 def reports(request):
     """View for generating reports"""
     form = ReportFilterForm(request.GET or None)
-    context = {'form': form}
+    # Always provide Afghan year list and sensible defaults
+    available_years = list(range(1300, 1601))
+    context = {
+        'form': form,
+        'available_years': available_years,
+        'selected_year': 1400,
+        'selected_month': 1,
+    }
     
     if form and form.is_valid():
         year = int(form.cleaned_data['year'])
@@ -219,6 +229,7 @@ def reports(request):
             'selected_year': year,
             'selected_month': month,
             'selected_month_name': get_afghan_month_name(month),
+            'available_years': available_years,
         })
     
     return render(request, 'school_management/reports.html', context)

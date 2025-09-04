@@ -3,11 +3,23 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import Student, FeePayment
 import re
+import jdatetime
+from jalali_date.fields import JalaliDateField
+from jalali_date.widgets import AdminJalaliDateWidget
 
 
 class StudentForm(forms.ModelForm):
     """Form for adding/editing students"""
     
+    # Use Jalali (Afghan) calendar for registration_date
+    registration_date = JalaliDateField(
+        label='تاریخ ثبت نام',
+        widget=AdminJalaliDateWidget(attrs={
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'placeholder': 'مثلاً 1403/06/15'
+        })
+    )
+
     class Meta:
         model = Student
         fields = [
@@ -34,10 +46,6 @@ class StudentForm(forms.ModelForm):
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
                 'placeholder': 'فیس ماهانه به افغانی',
                 'step': '0.01'
-            }),
-            'registration_date': forms.DateInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'type': 'date'
             }),
         }
 
@@ -76,7 +84,7 @@ class FeePaymentForm(forms.ModelForm):
         (5, 'اسد'), (6, 'سنبله'), (7, 'میزان'), (8, 'عقرب'),
         (9, 'قوس'), (10, 'جدی'), (11, 'دلو'), (12, 'حوت')
     ]
-    YEAR_CHOICES = [(y, str(y)) for y in range(1300, 1501)]
+    YEAR_CHOICES = [(y, str(y)) for y in range(1300, 1601)]
 
     month = forms.ChoiceField(
         choices=MONTH_CHOICES,
@@ -90,6 +98,15 @@ class FeePaymentForm(forms.ModelForm):
         label='سال',
         widget=forms.Select(attrs={
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+        })
+    )
+
+    # Use Jalali (Afghan) calendar for payment_date
+    payment_date = JalaliDateField(
+        label='تاریخ پرداخت',
+        widget=AdminJalaliDateWidget(attrs={
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'placeholder': 'مثلاً 1403/06/15'
         })
     )
 
@@ -109,10 +126,6 @@ class FeePaymentForm(forms.ModelForm):
             'payment_method': forms.Select(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
-            'payment_date': forms.DateInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'type': 'date'
-            }),
             'notes': forms.Textarea(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
                 'rows': 3,
@@ -126,8 +139,10 @@ class FeePaymentForm(forms.ModelForm):
         self.fields['student'].queryset = Student.objects.filter(is_active=True).order_by('name')
 
         # Initialize month/year from instance.month_year if available
-        initial_month = 1
-        initial_year = 1400
+        # Default to current Jalali month/year
+        j_now = jdatetime.date.today()
+        initial_month = j_now.month
+        initial_year = j_now.year
         if self.instance and self.instance.pk and self.instance.month_year:
             try:
                 y, m = self.instance.month_year.split('-')
@@ -154,8 +169,8 @@ class FeePaymentForm(forms.ModelForm):
         if month_int < 1 or month_int > 12:
             raise ValidationError('ماه باید بین 1 تا 12 باشد.')
 
-        if year_int < 1300 or year_int > 1500:
-            raise ValidationError('سال باید بین 1300 تا 1500 باشد.')
+        if year_int < 1300 or year_int > 1600:
+            raise ValidationError('سال باید بین 1300 تا 1600 باشد.')
 
         cleaned['month_year'] = f"{year_int}-{month_int:02d}"
         return cleaned
@@ -183,7 +198,7 @@ class ReportFilterForm(forms.Form):
     
     year = forms.ChoiceField(
         choices=YEAR_CHOICES,
-        initial=1400,
+        initial=jdatetime.date.today().year,
         widget=forms.Select(attrs={
             'class': 'px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
         }),
@@ -192,7 +207,7 @@ class ReportFilterForm(forms.Form):
     
     month = forms.ChoiceField(
         choices=MONTH_CHOICES,
-        initial=1,
+        initial=jdatetime.date.today().month,
         widget=forms.Select(attrs={
             'class': 'px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
         }),
@@ -215,7 +230,7 @@ class StudentSearchForm(forms.Form):
     class_filter = forms.ChoiceField(
         required=False,
         widget=forms.Select(attrs={
-            'class': 'px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'px-3 py-2 border border-gray-300 rounded-md focus:outline:none focus:ring-2 focus:ring-blue-500'
         }),
         label='فیلتر بر اساس صنف'
     )

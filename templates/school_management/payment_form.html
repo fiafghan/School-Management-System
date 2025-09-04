@@ -2,6 +2,11 @@
 
 {% block title %}ثبت پرداخت جدید - {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+{{ block.super }}
+{{ form.media.css }}
+{% endblock %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
@@ -186,105 +191,158 @@
 
 {% block extra_js %}
 <script>
+// Set Afghan month names at library level (persian-date/persianDatepicker/kama)
+(function() {
+  const AF_MONTHS = ['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
+  try {
+    if (window.persianDate && typeof window.persianDate.toLocale === 'function') {
+      window.persianDate.toLocale('fa', { monthNames: AF_MONTHS, months: AF_MONTHS });
+    }
+  } catch (e) {}
+  try {
+    if (window.jQuery) {
+      const $ = window.jQuery;
+      if ($.fn && $.fn.persianDatepicker && $.fn.persianDatepicker.defaults) {
+        $.fn.persianDatepicker.defaults.monthNames = AF_MONTHS;
+        $.fn.persianDatepicker.defaults.months = AF_MONTHS;
+      }
+      if ($.fn && $.fn.kamaDatepicker && $.fn.kamaDatepicker.defaults) {
+        $.fn.kamaDatepicker.defaults.months = AF_MONTHS;
+      }
+    }
+  } catch (e) {}
+})();
+</script>
+{{ form.media.js }}
+<script>
+// Robust month translation fallback (handles dynamic DOM updates)
+(function() {
+    const persian = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+    const afghan  = ['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
+    const map = new Map(persian.map((p, i) => [p, afghan[i]]));
+    const PERSIAN_LETTER = /[\u0600-\u06FF]/;
+
+    function replaceWithBoundaries(str, from, to) {
+        // Replace `from` only when not attached to other Persian letters
+        let out = '';
+        let i = 0;
+        while (i < str.length) {
+            const idx = str.indexOf(from, i);
+            if (idx === -1) { out += str.slice(i); break; }
+            const prev = str[idx - 1];
+            const next = str[idx + from.length];
+            const prevIsLetter = prev && PERSIAN_LETTER.test(prev);
+            const nextIsLetter = next && PERSIAN_LETTER.test(next);
+            out += str.slice(i, idx);
+            if (!prevIsLetter && !nextIsLetter) out += to; else out += from;
+            i = idx + from.length;
+        }
+        return out;
+    }
+
+    function translateString(str) {
+        if (!str) return str;
+        let result = str;
+        for (const [pe, af] of map.entries()) {
+            result = replaceWithBoundaries(result, pe, af);
+        }
+        // Normalize accidental repeats e.g. ججججدی -> جدی
+        result = result.replace(/ج+دی/g, 'جدی');
+        return result;
+    }
+
+    function translateElement(el) {
+        if (!el) return;
+        el.innerHTML = translateString(el.innerHTML);
+        ['title','aria-label'].forEach(attr => {
+            if (el.hasAttribute && el.hasAttribute(attr)) {
+                el.setAttribute(attr, translateString(el.getAttribute(attr)));
+            }
+        });
+        if (el.tagName === 'SELECT') {
+            Array.from(el.options).forEach(opt => { opt.text = translateString(opt.text); });
+        }
+    }
+
+    function processPickers(root = document) {
+        const selectors = [
+            '.pwt-datepicker', '.pwt-date-selector', '.datepicker-plot-area', '.popover-date',
+            '.pc-container', '.jcalendar', '.pd-views', '.pd-month', '.pwt-btn-switch', '.month-name', '.header-row'
+        ];
+        root.querySelectorAll(selectors.join(',')).forEach(translateElement);
+    }
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+            if (m.type === 'childList') {
+                m.addedNodes.forEach(node => { if (node.nodeType === 1) processPickers(node); });
+            } else if (m.type === 'attributes' && m.target) {
+                translateElement(m.target);
+            } else if (m.type === 'characterData' && m.target && m.target.parentElement) {
+                translateElement(m.target.parentElement);
+            }
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+
+    window.addEventListener('load', () => processPickers());
+    document.addEventListener('click', () => setTimeout(processPickers, 0), true);
+})();
+</script>
+<script>
+// Existing payment form JS (unchanged)
 document.addEventListener('DOMContentLoaded', function() {
     const studentSelect = document.querySelector('select[name="student"]');
     const amountInput = document.querySelector('input[name="amount"]');
     const studentInfo = document.getElementById('student-info');
     
-    // Student data for quick access
     const studentData = {};
-    
-    // Populate student data from select options
     if (studentSelect) {
         Array.from(studentSelect.options).forEach(option => {
             if (option.value) {
                 const parts = option.text.split(' - ');
                 if (parts.length >= 2) {
-                    studentData[option.value] = {
-                        name: parts[0],
-                        details: parts[1]
-                    };
+                    studentData[option.value] = { name: parts[0], details: parts[1] };
                 }
             }
         });
     }
-    
-    // Handle student selection
     if (studentSelect) {
         studentSelect.addEventListener('change', function() {
             const studentId = this.value;
             if (studentId && studentData[studentId]) {
-                // Show student info (this would need to be populated via AJAX in real implementation)
                 studentInfo.classList.remove('hidden');
-                
-                // Auto-fill amount with monthly fee (would need AJAX call)
                 fetchStudentInfo(studentId);
             } else {
                 studentInfo.classList.add('hidden');
             }
         });
     }
-    
-    // Format amount input
     if (amountInput) {
         amountInput.addEventListener('input', function(e) {
             let value = e.target.value.replace(/[^\d.]/g, '');
-            if (value.split('.').length > 2) {
-                value = value.substring(0, value.lastIndexOf('.'));
-            }
+            if (value.split('.').length > 2) { value = value.substring(0, value.lastIndexOf('.')); }
             e.target.value = value;
         });
     }
-    
-    // Auto-focus on student select
-    if (studentSelect) {
-        studentSelect.focus();
-    }
-    
-    // Set current date as default
-    const dateInput = document.querySelector('input[name="payment_date"]');
-    if (dateInput && !dateInput.value) {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        dateInput.value = `${yyyy}-${mm}-${dd}`;
-    }
-    
-    // Month/year defaults are provided by the server (local calendar). Do not override with Gregorian JS dates.
-    
-    // Validate form before submit
+    if (studentSelect) { studentSelect.focus(); }
+
     const form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
         const requiredFields = form.querySelectorAll('input[required], select[required]');
         let hasErrors = false;
-        
         requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                field.classList.add('border-red-500');
-                hasErrors = true;
-            } else {
-                field.classList.remove('border-red-500');
-            }
+            if (!field.value.trim()) { field.classList.add('border-red-500'); hasErrors = true; }
+            else { field.classList.remove('border-red-500'); }
         });
-        
-        if (hasErrors) {
-            e.preventDefault();
-            alert('لطفاً تمام فیلدهای الزامی را تکمیل کنید.');
-        }
+        if (hasErrors) { e.preventDefault(); alert('لطفاً تمام فیلدهای الزامی را تکمیل کنید.'); }
     });
-    
-    // Function to fetch student info (placeholder for AJAX call)
+
     function fetchStudentInfo(studentId) {
-        // This would be an AJAX call to get student details
-        // For now, just show the info panel
         document.getElementById('student-father').textContent = 'در حال بارگذاری...';
         document.getElementById('student-class').textContent = 'در حال بارگذاری...';
         document.getElementById('student-fee').textContent = 'در حال بارگذاری...';
-        
-        // Simulate AJAX call
         setTimeout(() => {
-            // This data would come from the server
             document.getElementById('student-father').textContent = 'نام پدر';
             document.getElementById('student-class').textContent = 'صنف';
             document.getElementById('student-fee').textContent = '0 افغانی';

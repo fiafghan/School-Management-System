@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'crispy_tailwind',
     'widget_tweaks',
     'school_management',  # Our main app
+    'jalali_date',
 ]
 
 MIDDLEWARE = [

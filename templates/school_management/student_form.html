@@ -2,6 +2,11 @@
 
 {% block title %}{{ title }} - {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+{{ block.super }}
+{{ form.media.css }}
+{% endblock %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
@@ -10,15 +15,16 @@
             <h2 class="text-2xl font-bold text-gray-900">{{ title }}</h2>
             <p class="text-gray-600">
                 {% if student %}
-                    ویرایش اطلاعات شاگرد {{ student.name }}
+                ویرایش اطلاعات شاگرد {{ student.name }}
                 {% else %}
-                    اطلاعات شاگرد جدید را وارد کنید
+                اطلاعات شاگرد جدید را وارد کنید
                 {% endif %}
             </p>
         </div>
         <a href="{% url 'student_list' %}" class="btn-secondary">
             <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
             </svg>
             بازگشت به لیست
         </a>
@@ -29,17 +35,17 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">اطلاعات شاگرد</h3>
         </div>
-        
+
         <form method="post" class="p-6">
             {% csrf_token %}
-            
+
             <!-- Form Errors -->
             {% if form.non_field_errors %}
-                <div class="alert alert-error mb-6">
-                    {{ form.non_field_errors }}
-                </div>
+            <div class="alert alert-error mb-6">
+                {{ form.non_field_errors }}
+            </div>
             {% endif %}
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Student ID (read-only on edit only) -->
                 {% if student and student.student_id %}
@@ -47,7 +53,9 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         شماره شاگرد
                     </label>
-                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700" value="{{ student.student_id }}" disabled>
+                    <input type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                        value="{{ student.student_id }}" disabled>
                 </div>
                 {% endif %}
 
@@ -58,35 +66,37 @@
                     </label>
                     {{ form.name }}
                     {% if form.name.errors %}
-                        <div class="mt-1 text-sm text-red-600">
-                            {{ form.name.errors.0 }}
-                        </div>
+                    <div class="mt-1 text-sm text-red-600">
+                        {{ form.name.errors.0 }}
+                    </div>
                     {% endif %}
                 </div>
 
                 <!-- Father Name -->
                 <div>
-                    <label for="{{ form.father_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.father_name.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700 mb-2">
                         نام پدر <span class="text-red-500">*</span>
                     </label>
                     {{ form.father_name }}
                     {% if form.father_name.errors %}
-                        <div class="mt-1 text-sm text-red-600">
-                            {{ form.father_name.errors.0 }}
-                        </div>
+                    <div class="mt-1 text-sm text-red-600">
+                        {{ form.father_name.errors.0 }}
+                    </div>
                     {% endif %}
                 </div>
 
                 <!-- Class -->
                 <div>
-                    <label for="{{ form.class_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.class_name.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700 mb-2">
                         صنف <span class="text-red-500">*</span>
                     </label>
                     {{ form.class_name }}
                     {% if form.class_name.errors %}
-                        <div class="mt-1 text-sm text-red-600">
-                            {{ form.class_name.errors.0 }}
-                        </div>
+                    <div class="mt-1 text-sm text-red-600">
+                        {{ form.class_name.errors.0 }}
+                    </div>
                     {% endif %}
                 </div>
 
@@ -97,35 +107,37 @@
                     </label>
                     {{ form.phone }}
                     {% if form.phone.errors %}
-                        <div class="mt-1 text-sm text-red-600">
-                            {{ form.phone.errors.0 }}
-                        </div>
+                    <div class="mt-1 text-sm text-red-600">
+                        {{ form.phone.errors.0 }}
+                    </div>
                     {% endif %}
                 </div>
 
                 <!-- Monthly Fee -->
                 <div>
-                    <label for="{{ form.monthly_fee.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.monthly_fee.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700 mb-2">
                         فیس ماهانه (افغانی) <span class="text-red-500">*</span>
                     </label>
                     {{ form.monthly_fee }}
                     {% if form.monthly_fee.errors %}
-                        <div class="mt-1 text-sm text-red-600">
-                            {{ form.monthly_fee.errors.0 }}
-                        </div>
+                    <div class="mt-1 text-sm text-red-600">
+                        {{ form.monthly_fee.errors.0 }}
+                    </div>
                     {% endif %}
                 </div>
 
                 <!-- Registration Date -->
                 <div class="md:col-span-2">
-                    <label for="{{ form.registration_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="{{ form.registration_date.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700 mb-2">
                         تاریخ ثبت نام
                     </label>
                     {{ form.registration_date }}
                     {% if form.registration_date.errors %}
-                        <div class="mt-1 text-sm text-red-600">
-                            {{ form.registration_date.errors.0 }}
-                        </div>
+                    <div class="mt-1 text-sm text-red-600">
+                        {{ form.registration_date.errors.0 }}
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -140,9 +152,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     {% if student %}
-                        به روز رسانی
+                    به روز رسانی
                     {% else %}
-                        ذخیره
+                    ذخیره
                     {% endif %}
                 </button>
             </div>
@@ -153,12 +165,12 @@
     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div class="flex">
             <svg class="w-5 h-5 text-blue-400 mt-0.5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div class="text-sm text-blue-700">
                 <p class="font-medium mb-1">راهنمای تکمیل فرم:</p>
                 <ul class="list-disc list-inside space-y-1">
-                    <li>شماره شاگرد به صورت خودکار توسط سیستم ایجاد می‌شود</li>
                     <li>فیلدهای ستاره‌دار الزامی هستند</li>
                     <li>شماره تلفن اختیاری است</li>
                     <li>فیس ماهانه به افغانی وارد شود</li>
@@ -171,44 +183,137 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-focus on first input
-    const firstInput = document.querySelector('input[type="text"]');
-    if (firstInput) {
-        firstInput.focus();
+// Set Afghan month names at library level (works for persian-date/persianDatepicker/kama)
+(function() {
+  const AF_MONTHS = ['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
+  try {
+    if (window.persianDate && typeof window.persianDate.toLocale === 'function') {
+      // Try both keys to cover different versions
+      window.persianDate.toLocale('fa', { monthNames: AF_MONTHS, months: AF_MONTHS });
     }
-    
-    // Format monthly fee input
+  } catch (e) {}
+  try {
+    if (window.jQuery) {
+      const $ = window.jQuery;
+      if ($.fn && $.fn.persianDatepicker && $.fn.persianDatepicker.defaults) {
+        $.fn.persianDatepicker.defaults.monthNames = AF_MONTHS;
+        $.fn.persianDatepicker.defaults.months = AF_MONTHS;
+      }
+      if ($.fn && $.fn.kamaDatepicker && $.fn.kamaDatepicker.defaults) {
+        $.fn.kamaDatepicker.defaults.months = AF_MONTHS;
+      }
+    }
+  } catch (e) {}
+})();
+</script>
+{{ form.media.js }}
+<script>
+// Robustly replace Persian month names with Afghan names in Jalali datepicker (fallback)
+(function() {
+    const persian = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+    const afghan  = ['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
+    const map = new Map(persian.map((p, i) => [p, afghan[i]]));
+    const PERSIAN_LETTER = /[\u0600-\u06FF]/;
+
+    function replaceWithBoundaries(str, from, to) {
+        // Replace occurrences of `from` only when not attached to other Persian letters
+        // to avoid replacing inside Afghan words like "جدی"
+        let out = '';
+        let i = 0;
+        while (i < str.length) {
+            const idx = str.indexOf(from, i);
+            if (idx === -1) {
+                out += str.slice(i);
+                break;
+            }
+            const prev = str[idx - 1];
+            const next = str[idx + from.length];
+            const prevIsLetter = prev && PERSIAN_LETTER.test(prev);
+            const nextIsLetter = next && PERSIAN_LETTER.test(next);
+            out += str.slice(i, idx);
+            if (!prevIsLetter && !nextIsLetter) {
+                out += to;
+            } else {
+                out += from; // keep original if part of a larger word
+            }
+            i = idx + from.length;
+        }
+        return out;
+    }
+
+    function translateString(str) {
+        if (!str) return str;
+        // First, map all months with boundary checks
+        let result = str;
+        for (const [pe, af] of map.entries()) {
+            result = replaceWithBoundaries(result, pe, af);
+        }
+        // Normalize possible repeated replacements like ججججدی -> جدی
+        result = result.replace(/ج+دی/g, 'جدی');
+        return result;
+    }
+
+    function translateElement(el) {
+        if (!el) return;
+        el.innerHTML = translateString(el.innerHTML);
+        ['title', 'aria-label'].forEach(attr => {
+            if (el.hasAttribute && el.hasAttribute(attr)) {
+                el.setAttribute(attr, translateString(el.getAttribute(attr)));
+            }
+        });
+        if (el.tagName === 'SELECT') {
+            Array.from(el.options).forEach(opt => {
+                opt.text = translateString(opt.text);
+            });
+        }
+    }
+
+    function processPickers(root = document) {
+        const selectors = [
+            '.pwt-datepicker', '.pwt-date-selector', '.datepicker-plot-area', '.popover-date',
+            '.pc-container', '.jcalendar', '.pd-views', '.pd-month', '.pwt-btn-switch', '.month-name', '.header-row'
+        ];
+        root.querySelectorAll(selectors.join(',')).forEach(translateElement);
+    }
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+            if (m.type === 'childList') {
+                m.addedNodes.forEach(node => { if (node.nodeType === 1) processPickers(node); });
+            } else if (m.type === 'attributes' && m.target) {
+                translateElement(m.target);
+            } else if (m.type === 'characterData' && m.target && m.target.parentElement) {
+                translateElement(m.target.parentElement);
+            }
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+
+    window.addEventListener('load', () => processPickers());
+    document.addEventListener('click', () => setTimeout(processPickers, 0), true);
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) { firstInput.focus(); }
     const feeInput = document.querySelector('input[name="monthly_fee"]');
     if (feeInput) {
         feeInput.addEventListener('input', function(e) {
             let value = e.target.value.replace(/[^\d.]/g, '');
-            if (value.split('.').length > 2) {
-                value = value.substring(0, value.lastIndexOf('.'));
-            }
+            if (value.split('.').length > 2) { value = value.substring(0, value.lastIndexOf('.')); }
             e.target.value = value;
         });
     }
-    
-    // Validate form before submit
     const form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
         const requiredFields = form.querySelectorAll('input[required], select[required]');
         let hasErrors = false;
-        
         requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                field.classList.add('border-red-500');
-                hasErrors = true;
-            } else {
-                field.classList.remove('border-red-500');
-            }
+            if (!field.value.trim()) { field.classList.add('border-red-500'); hasErrors = true; }
+            else { field.classList.remove('border-red-500'); }
         });
-        
-        if (hasErrors) {
-            e.preventDefault();
-            alert('لطفاً تمام فیلدهای الزامی را تکمیل کنید.');
-        }
+        if (hasErrors) { e.preventDefault(); alert('لطفاً تمام فیلدهای الزامی را تکمیل کنید.'); }
     });
 });
 </script>

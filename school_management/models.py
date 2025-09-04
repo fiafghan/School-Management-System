@@ -194,17 +194,37 @@ class FeePayment(models.Model):
 
     @classmethod
     def get_yearly_summary(cls, year):
-        """Get yearly payment summary by month"""
+        """Get Jalali yearly payment summary by month using month_year (YYYY-MM)."""
         from django.db.models import Sum, Count
-        from django.db.models.functions import Extract
-        
-        yearly_data = cls.objects.filter(
-            payment_date__year=year
-        ).extra(
-            select={'month': "strftime('%%m', payment_date)"}
-        ).values('month').annotate(
+
+        # Aggregate by month_year prefix matching the Jalali year
+        records = cls.objects.filter(
+            month_year__startswith=f"{year}-"
+        ).values('month_year').annotate(
             monthly_total=Sum('amount'),
             payment_count=Count('id')
-        ).order_by('month')
-        
-        return yearly_data
+        )
+
+        # Initialize all 12 months to zero to ensure chart completeness
+        summary_map = {m: {'monthly_total': Decimal('0.00'), 'payment_count': 0} for m in range(1, 13)}
+
+        for rec in records:
+            try:
+                month = int(rec['month_year'].split('-')[1])
+                if 1 <= month <= 12:
+                    summary_map[month] = {
+                        'monthly_total': rec['monthly_total'] or Decimal('0.00'),
+                        'payment_count': rec['payment_count'] or 0,
+                    }
+            except Exception:
+                continue
+
+        # Return as a list of dicts sorted by month
+        return [
+            {
+                'month': f"{month:02d}",
+                'monthly_total': summary_map[month]['monthly_total'],
+                'payment_count': summary_map[month]['payment_count'],
+            }
+            for month in range(1, 13)
+        ]
