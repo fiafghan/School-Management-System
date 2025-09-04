@@ -174,7 +174,7 @@ class ReportGenerator:
         
         if not yearly_data:
             # Show no data message
-            ctk.CTkLabel(parent_frame, text="داده‌ای برای نمایش وجود ندارد", 
+            ctk.CTkLabel(parent_frame, text="دیتا برای نمایش وجود ندارد", 
                         font=ctk.CTkFont(size=16)).pack(pady=50)
             return
         
