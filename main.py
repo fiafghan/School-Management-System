@@ -186,7 +186,7 @@ class AlAzharSchoolApp:
             # Month/Year
             ctk.CTkLabel(fields_frame, text="ماه/سال:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
             self.month_year_entry = ctk.CTkEntry(fields_frame, width=200, 
-                                               placeholder_text="مثال: 2024-09")
+                                               placeholder_text="مثال: 1404-02")
             self.month_year_entry.grid(row=1, column=1, padx=10, pady=5)
             
             # Payment method
