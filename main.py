@@ -20,7 +20,7 @@ class AlAzharSchoolApp:
     def __init__(self):
         try:
             self.root = ctk.CTk()
-            self.root.title("سیستم مدیریت فیس - لیسه عالی خصوصی الازهر")
+            self.root.title("سیستم مدیریت فیس - لیسه عالی خصوصی ازهر")
             self.root.geometry("1400x900")
             
             # Initialize database
@@ -45,7 +45,7 @@ class AlAzharSchoolApp:
             # Main title
             title_label = ctk.CTkLabel(
                 self.root,
-                text="سیستم مدیریت فیس - لیسه عالی خصوصی الازهر",
+                text="سیستم مدیریت فیس - لیسه عالی خصوصی ازهر",
                 font=ctk.CTkFont(size=24, weight="bold")
             )
             title_label.pack(pady=20)

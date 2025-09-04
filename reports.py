@@ -221,7 +221,7 @@ class ReportGenerator:
         class_data = self.get_class_wise_collections(year, month)
         
         report_text = f"""
-=== گزارش ماهانه لیسه عالی خصوصی الازهر ===
+=== گزارش ماهانه لیسه عالی خصوصی ازهر ===
 ماه: {month}/{year}
 تاریخ تولید گزارش: {datetime.now().strftime('%Y-%m-%d %H:%M')}
 
