@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}داشبورد - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">داشبورد</h2>
+        <p class="text-gray-600">خلاصه وضعیت مالی برای ماه {{ current_month_name }} {{ current_year }}</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Students -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                </div>
+                <div class="mr-4">
+                    <p class="text-sm font-medium text-gray-600">مجموع شاگردان</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_students }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Collection -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                </div>
+                <div class="mr-4">
+                    <p class="text-sm font-medium text-gray-600">جمع‌آوری این ماه</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ monthly_summary.total_collected }} افغانی</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Paid -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="mr-4">
+                    <p class="text-sm font-medium text-gray-600">شاگردان پرداخت کرده</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ monthly_summary.students_paid }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Collection -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+                <div class="mr-4">
+                    <p class="text-sm font-medium text-gray-600">مجموع کل</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_collected_all_time }} افغانی</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Payment Status Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">وضعیت پرداخت شاگردان</h3>
+            <div class="relative h-64">
+                <canvas id="paymentStatusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Class-wise Collections -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">جمع‌آوری به تفکیک صنف</h3>
+            <div class="relative h-64">
+                <canvas id="classCollectionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">آخرین پرداخت‌ها</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">شاگرد</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">مقدار</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ماه/سال</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">روش پرداخت</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاریخ</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for payment in recent_payments %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ payment.student.name }}</div>
+                            <div class="text-sm text-gray-500">{{ payment.student.student_id }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ payment.amount }} افغانی
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ payment.month_year }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ payment.payment_method }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ payment.payment_date|date:"Y/m/d" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                            هیچ پرداختی ثبت نشده است
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if recent_payments %}
+        <div class="px-6 py-3 bg-gray-50 text-center">
+            <a href="{% url 'payment_list' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                مشاهده همه پرداخت‌ها
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">عملیات سریع</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="{% url 'student_add' %}" class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                <svg class="w-8 h-8 text-blue-600 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <div>
+                    <h4 class="font-medium text-gray-900">اضافه کردن شاگرد</h4>
+                    <p class="text-sm text-gray-600">ثبت شاگرد جدید</p>
+                </div>
+            </a>
+            
+            <a href="{% url 'payment_add' %}" class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                <svg class="w-8 h-8 text-green-600 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+                <div>
+                    <h4 class="font-medium text-gray-900">ثبت پرداخت</h4>
+                    <p class="text-sm text-gray-600">ثبت پرداخت فیس</p>
+                </div>
+            </a>
+            
+            <a href="{% url 'reports' %}" class="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                <svg class="w-8 h-8 text-purple-600 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <div>
+                    <h4 class="font-medium text-gray-900">گزارشات</h4>
+                    <p class="text-sm text-gray-600">مشاهده گزارشات مالی</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Payment Status Pie Chart
+    const paymentStatusCtx = document.getElementById('paymentStatusChart').getContext('2d');
+    const studentsPaid = {{ monthly_summary.students_paid|default:0 }};
+    const studentsUnpaid = {{ monthly_summary.students_unpaid|default:0 }};
+    
+    new Chart(paymentStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['پرداخت کرده', 'پرداخت نکرده'],
+            datasets: [{
+                data: [studentsPaid, studentsUnpaid],
+                backgroundColor: ['#10b981', '#ef4444'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    rtl: true,
+                    textDirection: 'rtl'
+                }
+            }
+        }
+    });
+
+    // Class Collection Bar Chart
+    const classCollectionCtx = document.getElementById('classCollectionChart').getContext('2d');
+    const classData = [
+        {% for item in class_data %}
+        {
+            class_name: '{{ item.class_name|default:"صنف" }}',
+            total: {{ item.class_total|default:0 }}
+        }{% if not forloop.last %},{% endif %}
+        {% empty %}
+        {
+            class_name: 'هیچ داده‌ای موجود نیست',
+            total: 0
+        }
+        {% endfor %}
+    ];
+    
+    new Chart(classCollectionCtx, {
+        type: 'bar',
+        data: {
+            labels: classData.map(item => item.class_name),
+            datasets: [{
+                label: 'جمع‌آوری (افغانی)',
+                data: classData.map(item => item.total),
+                backgroundColor: '#3b82f6',
+                borderColor: '#2563eb',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('fa-AF') + ' افغانی';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y.toLocaleString('fa-AF') + ' افغانی';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

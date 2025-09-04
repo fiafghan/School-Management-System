@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+
+{% block title %}گزارشات - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">گزارشات مالی</h2>
+            <p class="text-gray-600">آمار و گزارش‌های تفصیلی پرداخت‌ها</p>
+        </div>
+        <div class="flex space-x-3 space-x-reverse">
+            <button onclick="window.print()" class="btn-secondary">
+                <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                چاپ گزارش
+            </button>
+            <a href="{% url 'reports' %}?export=excel" class="btn-primary">
+                <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                خروجی اکسل
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Year Filter -->
+                <div>
+                    <label for="year" class="block text-sm font-medium text-gray-700 mb-2">سال</label>
+                    <select name="year" id="year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        {% for year in available_years|default:"2024,2023,2022" %}
+                            <option value="{{ year }}" {% if year == selected_year|default:"2024" %}selected{% endif %}>
+                                {{ year }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Month Filter -->
+                <div>
+                    <label for="month" class="block text-sm font-medium text-gray-700 mb-2">ماه</label>
+                    <select name="month" id="month" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">همه ماه‌ها</option>
+                        <option value="1" {% if selected_month == "1" %}selected{% endif %}>حمل</option>
+                        <option value="2" {% if selected_month == "2" %}selected{% endif %}>ثور</option>
+                        <option value="3" {% if selected_month == "3" %}selected{% endif %}>جوزا</option>
+                        <option value="4" {% if selected_month == "4" %}selected{% endif %}>سرطان</option>
+                        <option value="5" {% if selected_month == "5" %}selected{% endif %}>اسد</option>
+                        <option value="6" {% if selected_month == "6" %}selected{% endif %}>سنبله</option>
+                        <option value="7" {% if selected_month == "7" %}selected{% endif %}>میزان</option>
+                        <option value="8" {% if selected_month == "8" %}selected{% endif %}>عقرب</option>
+                        <option value="9" {% if selected_month == "9" %}selected{% endif %}>قوس</option>
+                        <option value="10" {% if selected_month == "10" %}selected{% endif %}>جدی</option>
+                        <option value="11" {% if selected_month == "11" %}selected{% endif %}>دلو</option>
+                        <option value="12" {% if selected_month == "12" %}selected{% endif %}>حوت</option>
+                    </select>
+                </div>
+
+                <!-- Class Filter -->
+                <div>
+                    <label for="class" class="block text-sm font-medium text-gray-700 mb-2">صنف</label>
+                    <select name="class" id="class" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">همه صنف‌ها</option>
+                        <option value="1" {% if selected_class == "1" %}selected{% endif %}>صنف اول</option>
+                        <option value="2" {% if selected_class == "2" %}selected{% endif %}>صنف دوم</option>
+                        <option value="3" {% if selected_class == "3" %}selected{% endif %}>صنف سوم</option>
+                        <option value="4" {% if selected_class == "4" %}selected{% endif %}>صنف چهارم</option>
+                        <option value="5" {% if selected_class == "5" %}selected{% endif %}>صنف پنجم</option>
+                        <option value="6" {% if selected_class == "6" %}selected{% endif %}>صنف ششم</option>
+                        <option value="7" {% if selected_class == "7" %}selected{% endif %}>صنف هفتم</option>
+                        <option value="8" {% if selected_class == "8" %}selected{% endif %}>صنف هشتم</option>
+                        <option value="9" {% if selected_class == "9" %}selected{% endif %}>صنف نهم</option>
+                        <option value="10" {% if selected_class == "10" %}selected{% endif %}>صنف دهم</option>
+                        <option value="11" {% if selected_class == "11" %}selected{% endif %}>صنف یازدهم</option>
+                        <option value="12" {% if selected_class == "12" %}selected{% endif %}>صنف دوازدهم</option>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex items-end">
+                    <button type="submit" class="w-full btn-primary">
+                        <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        تولید گزارش
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                </div>
+                <div class="mr-4">
+                    <p class="text-sm font-medium text-gray-600">مجموع درآمد</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_revenue|default:0|floatformat:0 }} افغانی</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <div class="mr-4">
+                    <p class="text-sm font-medium text-gray-600">تعداد پرداخت‌ها</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_payments|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div class="mr-4">
+                    <p class="text-sm font-medium text-gray-600">شاگردان پرداخت کننده</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ paying_students|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="mr-4">
+                    <p class="text-sm font-medium text-gray-600">میانگین پرداخت</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ average_payment|default:0|floatformat:0 }} افغانی</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Monthly Revenue Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">درآمد ماهانه</h3>
+            <div class="h-80">
+                <canvas id="monthlyRevenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Class-wise Revenue Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">درآمد بر اساس صنف</h3>
+            <div class="h-80">
+                <canvas id="classRevenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Summary Table -->
+    {% if monthly_summary %}
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">خلاصه ماهانه</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ماه</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تعداد پرداخت</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">مجموع درآمد</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">میانگین پرداخت</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">شاگردان پرداخت کننده</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for month_data in monthly_summary %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ month_data.month_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ month_data.payment_count }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                            {{ month_data.total_amount|floatformat:0 }} افغانی
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ month_data.average_amount|floatformat:0 }} افغانی
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ month_data.unique_students }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Class Summary Table -->
+    {% if class_summary %}
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">خلاصه بر اساس صنف</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">صنف</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تعداد شاگردان</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تعداد پرداخت</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">مجموع درآمد</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">میانگین پرداخت</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for class_data in class_summary %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ class_data.class_name }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ class_data.student_count }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ class_data.payment_count }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                            {{ class_data.total_amount|floatformat:0 }} افغانی
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ class_data.average_amount|floatformat:0 }} افغانی
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Payment Methods Summary -->
+    {% if payment_methods_summary %}
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">خلاصه روش‌های پرداخت</h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for method_data in payment_methods_summary %}
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-gray-900">{{ method_data.count }}</div>
+                    <div class="text-sm text-gray-600">{{ method_data.method }}</div>
+                    <div class="text-lg font-semibold text-green-600">{{ method_data.total|floatformat:0 }} افغانی</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const filterSelects = document.querySelectorAll('select[name="year"], select[name="month"], select[name="class"]');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+
+    // Monthly Revenue Chart
+    const monthlyCtx = document.getElementById('monthlyRevenueChart');
+    if (monthlyCtx) {
+        const monthlyLabels = {{ monthly_labels|default:"[]"|safe }};
+        const monthlyData = {{ monthly_data|default:"[]"|safe }};
+        
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'درآمد ماهانه',
+                    data: monthlyData,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' افغانی';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Class Revenue Chart
+    const classCtx = document.getElementById('classRevenueChart');
+    if (classCtx) {
+        const classLabels = {{ class_labels|default:"[]"|safe }};
+        const classData = {{ class_data|default:"[]"|safe }};
+        
+        new Chart(classCtx, {
+            type: 'doughnut',
+            data: {
+                labels: classLabels,
+                datasets: [{
+                    data: classData,
+                    backgroundColor: [
+                        '#3B82F6',
+                        '#10B981',
+                        '#F59E0B',
+                        '#EF4444',
+                        '#8B5CF6',
+                        '#06B6D4',
+                        '#84CC16',
+                        '#F97316'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed.toLocaleString() + ' افغانی';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

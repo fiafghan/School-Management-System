@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">{{ title }}</h2>
+            <p class="text-gray-600">
+                {% if student %}
+                    ویرایش اطلاعات شاگرد {{ student.name }}
+                {% else %}
+                    اطلاعات شاگرد جدید را وارد کنید
+                {% endif %}
+            </p>
+        </div>
+        <a href="{% url 'student_list' %}" class="btn-secondary">
+            <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            بازگشت به لیست
+        </a>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">اطلاعات شاگرد</h3>
+        </div>
+        
+        <form method="post" class="p-6">
+            {% csrf_token %}
+            
+            <!-- Form Errors -->
+            {% if form.non_field_errors %}
+                <div class="alert alert-error mb-6">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Student ID (read-only on edit only) -->
+                {% if student and student.student_id %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        شماره شاگرد
+                    </label>
+                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700" value="{{ student.student_id }}" disabled>
+                </div>
+                {% endif %}
+
+                <!-- Name -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        نام شاگرد <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Father Name -->
+                <div>
+                    <label for="{{ form.father_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        نام پدر <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.father_name }}
+                    {% if form.father_name.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.father_name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Class -->
+                <div>
+                    <label for="{{ form.class_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        صنف <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.class_name }}
+                    {% if form.class_name.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.class_name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Phone -->
+                <div>
+                    <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        شماره تلفن
+                    </label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.phone.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Monthly Fee -->
+                <div>
+                    <label for="{{ form.monthly_fee.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        فیس ماهانه (افغانی) <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.monthly_fee }}
+                    {% if form.monthly_fee.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.monthly_fee.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Registration Date -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.registration_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        تاریخ ثبت نام
+                    </label>
+                    {{ form.registration_date }}
+                    {% if form.registration_date.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.registration_date.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3 space-x-reverse mt-8 pt-6 border-t border-gray-200">
+                <a href="{% url 'student_list' %}" class="btn-secondary">
+                    انصراف
+                </a>
+                <button type="submit" class="btn-primary">
+                    <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {% if student %}
+                        به روز رسانی
+                    {% else %}
+                        ذخیره
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Help Text -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <svg class="w-5 h-5 text-blue-400 mt-0.5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="text-sm text-blue-700">
+                <p class="font-medium mb-1">راهنمای تکمیل فرم:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>شماره شاگرد به صورت خودکار توسط سیستم ایجاد می‌شود</li>
+                    <li>فیلدهای ستاره‌دار الزامی هستند</li>
+                    <li>شماره تلفن اختیاری است</li>
+                    <li>فیس ماهانه به افغانی وارد شود</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus on first input
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Format monthly fee input
+    const feeInput = document.querySelector('input[name="monthly_fee"]');
+    if (feeInput) {
+        feeInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\d.]/g, '');
+            if (value.split('.').length > 2) {
+                value = value.substring(0, value.lastIndexOf('.'));
+            }
+            e.target.value = value;
+        });
+    }
+    
+    // Validate form before submit
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('input[required], select[required]');
+        let hasErrors = false;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('border-red-500');
+                hasErrors = true;
+            } else {
+                field.classList.remove('border-red-500');
+            }
+        });
+        
+        if (hasErrors) {
+            e.preventDefault();
+            alert('لطفاً تمام فیلدهای الزامی را تکمیل کنید.');
+        }
+    });
+});
+</script>
+{% endblock %}
