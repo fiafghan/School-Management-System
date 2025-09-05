@@ -11,20 +11,11 @@ from jalali_date.widgets import AdminJalaliDateWidget
 class StudentForm(forms.ModelForm):
     """Form for adding/editing students"""
     
-    # Use Jalali (Afghan) calendar for registration_date
-    registration_date = JalaliDateField(
-        label='تاریخ ثبت نام',
-        widget=AdminJalaliDateWidget(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
-            'placeholder': 'مثلاً 1403/06/15'
-        })
-    )
-
     class Meta:
         model = Student
         fields = [
             'name', 'father_name', 'class_name', 
-            'phone', 'monthly_fee', 'registration_date'
+            'phone', 'monthly_fee'
         ]
         widgets = {
             'name': forms.TextInput(attrs={
@@ -74,6 +65,16 @@ class StudentForm(forms.ModelForm):
             raise ValidationError('شماره تلفن معتبر نیست.')
         return phone
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Auto-set registration_date to today (Gregorian) based on Jalali today
+        if not instance.registration_date:
+            j_today = jdatetime.date.today()
+            instance.registration_date = j_today.togregorian()
+        if commit:
+            instance.save()
+        return instance
+
 
 class FeePaymentForm(forms.ModelForm):
     """Form for recording fee payments with separate month and year selectors."""
@@ -101,19 +102,10 @@ class FeePaymentForm(forms.ModelForm):
         })
     )
 
-    # Use Jalali (Afghan) calendar for payment_date
-    payment_date = JalaliDateField(
-        label='تاریخ پرداخت',
-        widget=AdminJalaliDateWidget(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
-            'placeholder': 'مثلاً 1403/06/15'
-        })
-    )
-
     class Meta:
         model = FeePayment
-        # Expose fields used by the template; month_year is set in clean/save
-        fields = ['student', 'amount', 'payment_method', 'payment_date', 'notes']
+        # Expose fields used by the template; month_year and payment_date are set in save()
+        fields = ['student', 'amount', 'payment_method', 'notes']
         widgets = {
             'student': forms.Select(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
@@ -143,7 +135,7 @@ class FeePaymentForm(forms.ModelForm):
         j_now = jdatetime.date.today()
         initial_month = j_now.month
         initial_year = j_now.year
-        if self.instance and self.instance.pk and self.instance.month_year:
+        if self.instance and self.instance.pk and getattr(self.instance, 'month_year', None):
             try:
                 y, m = self.instance.month_year.split('-')
                 initial_year, initial_month = int(y), int(m)
@@ -181,6 +173,10 @@ class FeePaymentForm(forms.ModelForm):
         month_year = self.cleaned_data.get('month_year')
         if month_year:
             instance.month_year = month_year
+        # Auto-set payment_date to today (Gregorian) based on Jalali today
+        if not instance.payment_date:
+            j_today = jdatetime.date.today()
+            instance.payment_date = j_today.togregorian()
         if commit:
             instance.save()
         return instance
@@ -209,7 +205,7 @@ class ReportFilterForm(forms.Form):
         choices=MONTH_CHOICES,
         initial=jdatetime.date.today().month,
         widget=forms.Select(attrs={
-            'class': 'px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+            'class': 'px-3 py-2 border border-gray-300 rounded-md focus:outline:none focus:ring-2 focus:ring-blue-500'
         }),
         label='ماه'
     )

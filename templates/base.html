@@ -11,6 +11,68 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <!-- Global Afghan month names for Jalali datepickers -->
+    <script>
+        // Strong, safe translator: walk text nodes only while the picker is open
+        (function() {
+          const MAP = new Map([
+            ['فروردین','حمل'], ['اردیبهشت','ثور'], ['خرداد','جوزا'], ['تیر','سرطان'],
+            ['مرداد','اسد'], ['شهریور','سنبله'], ['مهر','میزان'], ['آبان','عقرب'],
+            ['آذر','قوس'], ['دی','جدی'], ['بهمن','دلو'], ['اسفند','حوت']
+          ]);
+        
+          // Replace in text nodes only (no innerHTML edits)
+          function replaceInTextNode(node) {
+            if (!node || node.nodeType !== Node.TEXT_NODE) return;
+            let text = node.nodeValue;
+            if (!text) return;
+            // Remove zero-width joiners just for matching (don’t keep them)
+            const clean = text.replace(/\u200c/g, '');
+            let out = clean;
+            MAP.forEach((to, from) => { out = out.split(from).join(to); });
+            if (out !== clean) node.nodeValue = out;
+          }
+        
+          function walkAndTranslate(root) {
+            if (!root) return;
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            const txtNodes = [];
+            let n;
+            while ((n = walker.nextNode())) txtNodes.push(n);
+            txtNodes.forEach(replaceInTextNode);
+          }
+        
+          function getPickerRoot() {
+            // include more variants here if needed
+            return document.querySelector(
+              '.pwt-datepicker, .datepicker-plot-area, .pc-container, .jcalendar, .pwt-date-selector, .popover-date'
+            );
+          }
+        
+          let timer = null, ticks = 0;
+          function start() {
+            stop();
+            ticks = 0;
+            timer = setInterval(() => {
+              const root = getPickerRoot();
+              if (root) walkAndTranslate(root);
+              if (++ticks > 60) stop(); // ~6s is enough to cover navigation
+            }, 100);
+          }
+          function stop() {
+            if (timer) clearInterval(timer);
+            timer = null;
+          }
+        
+          window.addEventListener('load', () => setTimeout(start, 0));
+          const input = document.querySelector('input[name="registration_date"]');
+          if (input) {
+            input.addEventListener('focus', () => setTimeout(start, 10));
+            input.addEventListener('click', () => setTimeout(start, 10));
+            input.addEventListener('change', () => setTimeout(stop, 500));
+          }
+        })();
+        </script>
     <!-- Persian Font -->
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     

@@ -5,6 +5,20 @@
 {% block extra_css %}
 {{ block.super }}
 {{ form.media.css }}
+<style>
+  /* Ensure Jalali datepicker overlays above Tailwind modals/cards */
+  .pwt-datepicker,
+  .pwt-date-selector,
+  .datepicker-plot-area,
+  .popover-date,
+  .pc-container,
+  .jcalendar,
+  .pd-views { z-index: 9999 !important; }
+  /* Improve click targets inside calendar */
+  .datepicker-plot-area .days table td,
+  .datepicker-plot-area .month table td,
+  .datepicker-plot-area .year table td { cursor: pointer; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -20,6 +34,7 @@
                 اطلاعات شاگرد جدید را وارد کنید
                 {% endif %}
             </p>
+            <p class="text-xs text-gray-500 mt-1">تاریخ ثبت نام به طور خودکار با تاریخ امروز تنظیم می‌شود.</p>
         </div>
         <a href="{% url 'student_list' %}" class="btn-secondary">
             <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,20 +141,6 @@
                     </div>
                     {% endif %}
                 </div>
-
-                <!-- Registration Date -->
-                <div class="md:col-span-2">
-                    <label for="{{ form.registration_date.id_for_label }}"
-                        class="block text-sm font-medium text-gray-700 mb-2">
-                        تاریخ ثبت نام
-                    </label>
-                    {{ form.registration_date }}
-                    {% if form.registration_date.errors %}
-                    <div class="mt-1 text-sm text-red-600">
-                        {{ form.registration_date.errors.0 }}
-                    </div>
-                    {% endif %}
-                </div>
             </div>
 
             <!-- Form Actions -->
@@ -188,8 +189,8 @@
   const AF_MONTHS = ['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
   try {
     if (window.persianDate && typeof window.persianDate.toLocale === 'function') {
-      // Try both keys to cover different versions
-      window.persianDate.toLocale('fa', { monthNames: AF_MONTHS, months: AF_MONTHS });
+      try { window.persianDate.toLocale('fa', { monthNames: AF_MONTHS, months: AF_MONTHS }); } catch (e) {}
+      try { window.persianDate.locale && window.persianDate.locale('fa'); } catch (e) {}
     }
   } catch (e) {}
   try {
@@ -208,89 +209,58 @@
 </script>
 {{ form.media.js }}
 <script>
-// Robustly replace Persian month names with Afghan names in Jalali datepicker (fallback)
+// Robust but light translator scoped to the datepicker only
 (function() {
-    const persian = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
-    const afghan  = ['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
-    const map = new Map(persian.map((p, i) => [p, afghan[i]]));
-    const PERSIAN_LETTER = /[\u0600-\u06FF]/;
+  const P2A = new Map([
+    ['فروردین','حمل'], ['اردیبهشت','ثور'], ['خرداد','جوزا'], ['تیر','سرطان'], ['مرداد','اسد'], ['شهریور','سنبله'],
+    ['مهر','میزان'], ['آبان','عقرب'], ['آذر','قوس'], ['دی','جدی'], ['بهمن','دلو'], ['اسفند','حوت']
+  ]);
 
-    function replaceWithBoundaries(str, from, to) {
-        // Replace occurrences of `from` only when not attached to other Persian letters
-        // to avoid replacing inside Afghan words like "جدی"
-        let out = '';
-        let i = 0;
-        while (i < str.length) {
-            const idx = str.indexOf(from, i);
-            if (idx === -1) {
-                out += str.slice(i);
-                break;
-            }
-            const prev = str[idx - 1];
-            const next = str[idx + from.length];
-            const prevIsLetter = prev && PERSIAN_LETTER.test(prev);
-            const nextIsLetter = next && PERSIAN_LETTER.test(next);
-            out += str.slice(i, idx);
-            if (!prevIsLetter && !nextIsLetter) {
-                out += to;
-            } else {
-                out += from; // keep original if part of a larger word
-            }
-            i = idx + from.length;
+  function translateNodeText(node) {
+    if (!node) return;
+    let txt = node.textContent;
+    if (!txt) return;
+    P2A.forEach((to, from) => { txt = txt.replaceAll(from, to); });
+    node.textContent = txt;
+  }
+
+  function translatePicker(root) {
+    if (!root) return;
+    // Common targets in persian/kama datepickers
+    const targets = [];
+    targets.push(...root.querySelectorAll('.month-name, .header-row, .pwt-btn-switch, .day-name, .month-item, .year-item'));
+    targets.push(...root.querySelectorAll('select option'));
+    targets.forEach(translateNodeText);
+  }
+
+  function attachObserverToPicker(pickerRoot) {
+    if (!pickerRoot || pickerRoot.__af_observer) return;
+    // Initial pass
+    translatePicker(pickerRoot);
+    const obs = new MutationObserver(muts => {
+      for (const m of muts) {
+        if (m.type === 'childList' || m.type === 'characterData' || m.type === 'attributes') {
+          translatePicker(pickerRoot);
         }
-        return out;
-    }
-
-    function translateString(str) {
-        if (!str) return str;
-        // First, map all months with boundary checks
-        let result = str;
-        for (const [pe, af] of map.entries()) {
-            result = replaceWithBoundaries(result, pe, af);
-        }
-        // Normalize possible repeated replacements like ججججدی -> جدی
-        result = result.replace(/ج+دی/g, 'جدی');
-        return result;
-    }
-
-    function translateElement(el) {
-        if (!el) return;
-        el.innerHTML = translateString(el.innerHTML);
-        ['title', 'aria-label'].forEach(attr => {
-            if (el.hasAttribute && el.hasAttribute(attr)) {
-                el.setAttribute(attr, translateString(el.getAttribute(attr)));
-            }
-        });
-        if (el.tagName === 'SELECT') {
-            Array.from(el.options).forEach(opt => {
-                opt.text = translateString(opt.text);
-            });
-        }
-    }
-
-    function processPickers(root = document) {
-        const selectors = [
-            '.pwt-datepicker', '.pwt-date-selector', '.datepicker-plot-area', '.popover-date',
-            '.pc-container', '.jcalendar', '.pd-views', '.pd-month', '.pwt-btn-switch', '.month-name', '.header-row'
-        ];
-        root.querySelectorAll(selectors.join(',')).forEach(translateElement);
-    }
-
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach(m => {
-            if (m.type === 'childList') {
-                m.addedNodes.forEach(node => { if (node.nodeType === 1) processPickers(node); });
-            } else if (m.type === 'attributes' && m.target) {
-                translateElement(m.target);
-            } else if (m.type === 'characterData' && m.target && m.target.parentElement) {
-                translateElement(m.target.parentElement);
-            }
-        });
+      }
     });
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+    obs.observe(pickerRoot, { childList: true, subtree: true, characterData: true, attributes: true });
+    pickerRoot.__af_observer = obs;
+  }
 
-    window.addEventListener('load', () => processPickers());
-    document.addEventListener('click', () => setTimeout(processPickers, 0), true);
+  function findAndAttach() {
+    // Try various container classes used by popular Jalali pickers
+    const picker = document.querySelector('.pwt-datepicker, .datepicker-plot-area, .pc-container, .jcalendar');
+    if (picker) attachObserverToPicker(picker);
+  }
+
+  // Bind when input focuses (picker opens) and on load
+  window.addEventListener('load', () => setTimeout(findAndAttach, 0));
+  const input = document.querySelector('input[name="registration_date"]');
+  if (input) {
+    input.addEventListener('focus', () => setTimeout(findAndAttach, 10));
+    input.addEventListener('click', () => setTimeout(findAndAttach, 10));
+  }
 })();
 </script>
 <script>
