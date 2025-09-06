@@ -85,6 +85,12 @@
         .rtl {
             direction: rtl;
         }
+
+        @media print {
+                .no-print {
+                    display: none;
+                }
+            }
         
         .sidebar-active {
             background-color: #3b82f6;
@@ -162,7 +168,7 @@
 </head>
 <body class="bg-gray-50 rtl">
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
+    <nav class="bg-white shadow-lg no-print">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
