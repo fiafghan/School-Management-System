@@ -200,7 +200,7 @@ def payment_list(request):
     elif year_int:
         qs = qs.filter(month_year__startswith=f"{year_int}-")
     elif month_int:
-        qs = qs.filter(month_year__regex=fr"^\d{4}-{month_int:02d}$")
+        qs = qs.filter(month_year__endswith=f"-{month_int:02d}")
 
     if student_id:
         qs = qs.filter(student_id=student_id)
